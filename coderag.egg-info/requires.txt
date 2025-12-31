@@ -1,0 +1,16 @@
+faiss-cpu<2,>=1.9.0.post1
+numpy<2,>=1.26
+openai<2,>=1.44
+python-dotenv<2,>=1.0
+sentence-transformers<4,>=3.0
+streamlit<2,>=1.38
+tenacity<9,>=8.5
+watchdog<5,>=4.0
+
+[dev]
+black>=24.8
+flake8>=7.1
+isort>=5.13
+mypy>=1.11
+pre-commit>=3.7
+pytest>=8.3

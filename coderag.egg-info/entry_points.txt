@@ -1,0 +1,2 @@
+[console_scripts]
+coderag-cli = coderag.cli:main
