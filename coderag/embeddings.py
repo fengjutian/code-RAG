@@ -39,9 +39,9 @@ class EmbeddingClient:
         # Initialize local model if needed
         if self.use_local:
             try:
-                # Use a lightweight, high-quality local model
-                self.local_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-                logger.info(f"Local embedding model initialized: paraphrase-MiniLM-L6-v2")
+                # Use a better quality local model for improved semantic understanding
+                self.local_model = SentenceTransformer('all-MiniLM-L6-v2')
+                logger.info(f"Local embedding model initialized: all-MiniLM-L6-v2")
             except Exception as e:
                 logger.error(f"Failed to initialize local embedding model: {e}")
 
@@ -49,12 +49,62 @@ class EmbeddingClient:
 embedding_client = EmbeddingClient()
 
 
-def _chunk_text(text: str, max_chars: int = 4000) -> List[str]:
-    """Naive chunking by characters to avoid overly long inputs."""
+def _chunk_text(text: str, max_chars: int = 4000, overlap: int = 50) -> List[str]:
+    """Improved chunking that respects sentence boundaries.
+    
+    Args:
+        text: Text to chunk
+        max_chars: Maximum characters per chunk
+        overlap: Number of characters to overlap between chunks
+    
+    Returns:
+        List of text chunks
+    """
+    import re
+    
     text = text.strip()
     if len(text) <= max_chars:
         return [text]
-    return [text[i : i + max_chars] for i in range(0, len(text), max_chars)]
+    
+    # Split by sentences (rudimentary but better than character-based)
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    for sentence in sentences:
+        sentence_length = len(sentence)
+        
+        # If adding this sentence would exceed max_chars
+        if current_length + sentence_length > max_chars:
+            if current_chunk:
+                chunk_text = ' '.join(current_chunk)
+                chunks.append(chunk_text)
+                
+                # Calculate overlap from the end of current chunk
+                if len(chunk_text) > overlap:
+                    overlap_content = chunk_text[-overlap:]
+                    current_chunk = [overlap_content, sentence]
+                    current_length = len(overlap_content) + sentence_length + 1  # +1 for space
+                else:
+                    current_chunk = [sentence]
+                    current_length = sentence_length
+            else:
+                # Single sentence too long, split by words
+                words = sentence.split()
+                for i in range(0, len(words), max_chars):
+                    chunks.append(' '.join(words[i:i+max_chars]))
+                current_chunk = []
+                current_length = 0
+        else:
+            current_chunk.append(sentence)
+            current_length += sentence_length + 1  # +1 for space
+    
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+    
+    return chunks
 
 
 @retry(
@@ -69,7 +119,7 @@ def _embed_batch(inputs: List[str]) -> np.ndarray:
         if embedding_client.local_model is None:
             raise RuntimeError("Local embedding model not initialized")
         
-        logger.info(f"Using local embedding model: paraphrase-MiniLM-L6-v2")
+        logger.info(f"Using local embedding model: all-MiniLM-L6-v2")
         logger.info(f"Input texts count: {len(inputs)}")
         logger.info(f"First input sample (truncated): {inputs[0][:100]}...")
         
@@ -117,8 +167,8 @@ def generate_embeddings(text: str) -> Optional[np.ndarray]:
     # Ensure local model is initialized as fallback
     if not embedding_client.local_model:
         try:
-            embedding_client.local_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-            logger.info("Local embedding model initialized as fallback: paraphrase-MiniLM-L6-v2")
+            embedding_client.local_model = SentenceTransformer('all-MiniLM-L6-v2')
+            logger.info("Local embedding model initialized as fallback: all-MiniLM-L6-v2")
         except Exception as e:
             logger.error(f"Failed to initialize local embedding model: {e}")
             return None
