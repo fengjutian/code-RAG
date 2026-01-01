@@ -1,0 +1,22 @@
+# Compatible versions to avoid dependency conflicts
+faiss-cpu==1.9.0
+numpy==1.26.4
+openai==1.44.0
+python-dotenv==1.0.1
+streamlit==1.38.0
+tenacity==8.5.0
+watchdog==4.0.0
+
+# Sentence Transformers with compatible torch/torchvision versions
+sentence-transformers==2.2.2
+torch==2.0.1
+torchvision==0.15.2
+transformers==4.21.3
+
+# Development dependencies (optional)
+black==24.8.0
+flake8==7.1.1
+isort==5.13.2
+mypy==1.11.2
+pre-commit==3.7.0
+pytest==8.3.2
