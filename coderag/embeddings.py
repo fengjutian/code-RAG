@@ -11,12 +11,16 @@
 """
 
 import logging
+import os
 from typing import List, Optional
 
 import numpy as np
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+# 设置HuggingFace镜像源以解决网络连接问题
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
 from coderag.config import (
     DEEPSEEK_API_BASE, 

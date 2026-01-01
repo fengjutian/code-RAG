@@ -33,8 +33,8 @@ st.set_page_config(
     page_title="CodeRAG: Your Coding Assistant", page_icon="🤖", layout="wide"
 )
 
-st.title("🤖 CodeRAG: Your Coding Assistant")
-st.markdown("*AI-powered code retrieval and assistance using RAG technology*")
+st.title("🤖 CodeRAG: 您的编程助手")
+st.markdown("*基于RAG技术的AI代码检索与辅助*")
 
 # Initialize session state
 if "messages" not in st.session_state:
@@ -143,33 +143,88 @@ if not st.session_state.messages:
     st.markdown("### 💡 Tips for better results:")
     st.markdown(
         """
-    - Ask specific questions about your code
-    - Mention file names or functions you're interested in
-    - Request explanations, improvements, or debugging help
-    - Ask about code patterns or best practices
+    - 提出关于代码的具体问题
+    - 提及您感兴趣的文件名或函数名
+    - 请求解释、改进或调试帮助
+    - 询问代码模式或最佳实践
     """
     )
 
-    st.markdown("### 🚀 Example queries:")
-    col1, col2 = st.columns(2)
+    st.markdown("### 🚀 示例查询：")
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        if st.button("📝 Explain the indexing process"):
+        if st.button("📝 解释索引过程"):
             st.session_state.messages.append(
                 {
                     "role": "user",
-                    "content": "Explain how the FAISS indexing works in this codebase",
+                    "content": "解释FAISS索引在这个代码库中是如何工作的",
                 }
             )
             st.rerun()
-    with col2:
-        if st.button("🐛 Help debug search issues"):
+        
+        if st.button("🔍 搜索代码示例"):
             st.session_state.messages.append(
                 {
                     "role": "user",
-                    "content": (
-                        "How can I debug issues with code search not returning "
-                        "results?"
-                    ),
+                    "content": "如何搜索特定函数的实现代码？",
+                }
+            )
+            st.rerun()
+    
+    with col2:
+        if st.button("🐛 帮助调试搜索问题"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "代码搜索没有返回结果，如何调试这个问题？",
+                }
+            )
+            st.rerun()
+        
+        if st.button("📊 查看项目结构"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "这个项目的整体结构是怎样的？有哪些主要模块？",
+                }
+            )
+            st.rerun()
+    
+    with col3:
+        if st.button("⚙️ 配置说明"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "如何配置环境变量和模型参数？",
+                }
+            )
+            st.rerun()
+        
+        if st.button("📚 嵌入模型使用"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "嵌入模型是如何生成文本向量的？",
+                }
+            )
+            st.rerun()
+    
+    with col4:
+        if st.button("🚀 性能优化"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "如何优化搜索速度和准确性？",
+                }
+            )
+            st.rerun()
+        
+        if st.button("💡 最佳实践"):
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": "使用RAG技术的最佳实践是什么？",
                 }
             )
             st.rerun()
