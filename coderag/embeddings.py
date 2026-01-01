@@ -39,11 +39,23 @@ class EmbeddingClient:
         # Initialize local model if needed
         if self.use_local:
             try:
-                # Use a better quality local model for improved semantic understanding
-                self.local_model = SentenceTransformer('all-MiniLM-L6-v2')
-                logger.info(f"Local embedding model initialized: all-MiniLM-L6-v2")
+                # Use a higher dimensional model that matches FAISS index dimension
+                self.local_model = SentenceTransformer('all-mpnet-base-v2')  # 768维
+                logger.info(f"Local embedding model initialized: all-mpnet-base-v2 (768 dimensions)")
+                
+                # Override embedding dimension to match local model
+                global EMBEDDING_DIM
+                EMBEDDING_DIM = 768
+                logger.info(f"Embedding dimension set to: {EMBEDDING_DIM}")
+                
             except Exception as e:
                 logger.error(f"Failed to initialize local embedding model: {e}")
+                # Fallback to smaller model
+                try:
+                    self.local_model = SentenceTransformer('all-MiniLM-L6-v2')
+                    logger.info(f"Fallback model initialized: all-MiniLM-L6-v2 (384 dimensions)")
+                except Exception as e2:
+                    logger.error(f"Failed to initialize fallback model: {e2}")
 
 # Create embedding client instance
 embedding_client = EmbeddingClient()
@@ -167,8 +179,14 @@ def generate_embeddings(text: str) -> Optional[np.ndarray]:
     # Ensure local model is initialized as fallback
     if not embedding_client.local_model:
         try:
-            embedding_client.local_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("Local embedding model initialized as fallback: all-MiniLM-L6-v2")
+            embedding_client.local_model = SentenceTransformer('all-mpnet-base-v2')
+            logger.info("Local embedding model initialized as fallback: all-mpnet-base-v2")
+            
+            # Update embedding dimension to match the model
+            global EMBEDDING_DIM
+            EMBEDDING_DIM = 768
+            logger.info(f"Embedding dimension set to: {EMBEDDING_DIM}")
+            
         except Exception as e:
             logger.error(f"Failed to initialize local embedding model: {e}")
             return None
