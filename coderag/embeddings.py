@@ -38,24 +38,29 @@ class EmbeddingClient:
         
         # Initialize local model if needed
         if self.use_local:
-            try:
-                # Use a higher dimensional model that matches FAISS index dimension
-                self.local_model = SentenceTransformer('all-mpnet-base-v2')  # 768维
-                logger.info(f"Local embedding model initialized: all-mpnet-base-v2 (768 dimensions)")
-                
-                # Override embedding dimension to match local model
-                global EMBEDDING_DIM
-                EMBEDDING_DIM = 768
-                logger.info(f"Embedding dimension set to: {EMBEDDING_DIM}")
-                
-            except Exception as e:
-                logger.error(f"Failed to initialize local embedding model: {e}")
-                # Fallback to smaller model
+            # Use the model that matches our configured embedding dimension
+            from coderag.config import EMBEDDING_DIM
+            
+            if EMBEDDING_DIM == 768:
+                # Try 768-dimension models
+                model_options = [
+                    'all-mpnet-base-v2',
+                    'sentence-transformers/all-mpnet-base-v2'
+                ]
+            else:
+                # Use 384-dimension model as fallback
+                model_options = ['all-MiniLM-L6-v2']
+            
+            for model_name in model_options:
                 try:
-                    self.local_model = SentenceTransformer('all-MiniLM-L6-v2')
-                    logger.info(f"Fallback model initialized: all-MiniLM-L6-v2 (384 dimensions)")
-                except Exception as e2:
-                    logger.error(f"Failed to initialize fallback model: {e2}")
+                    self.local_model = SentenceTransformer(model_name)
+                    logger.info(f"Local embedding model initialized: {model_name} ({EMBEDDING_DIM} dimensions)")
+                    break
+                except Exception as e:
+                    logger.error(f"Failed to initialize {model_name}: {e}")
+                    continue
+            else:
+                logger.error("All local embedding models failed to initialize")
 
 # Create embedding client instance
 embedding_client = EmbeddingClient()
@@ -131,7 +136,7 @@ def _embed_batch(inputs: List[str]) -> np.ndarray:
         if embedding_client.local_model is None:
             raise RuntimeError("Local embedding model not initialized")
         
-        logger.info(f"Using local embedding model: all-MiniLM-L6-v2")
+        logger.info(f"Using local embedding model: {embedding_client.local_model}")
         logger.info(f"Input texts count: {len(inputs)}")
         logger.info(f"First input sample (truncated): {inputs[0][:100]}...")
         
@@ -178,17 +183,29 @@ def generate_embeddings(text: str) -> Optional[np.ndarray]:
 
     # Ensure local model is initialized as fallback
     if not embedding_client.local_model:
-        try:
-            embedding_client.local_model = SentenceTransformer('all-mpnet-base-v2')
-            logger.info("Local embedding model initialized as fallback: all-mpnet-base-v2")
-            
-            # Update embedding dimension to match the model
-            global EMBEDDING_DIM
-            EMBEDDING_DIM = 768
-            logger.info(f"Embedding dimension set to: {EMBEDDING_DIM}")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize local embedding model: {e}")
+        # Use the model that matches our configured embedding dimension
+        from coderag.config import EMBEDDING_DIM
+        
+        if EMBEDDING_DIM == 768:
+            # Try 768-dimension models
+            model_options = [
+                'all-mpnet-base-v2',
+                'sentence-transformers/all-mpnet-base-v2'
+            ]
+        else:
+            # Use 384-dimension model as fallback
+            model_options = ['all-MiniLM-L6-v2']
+        
+        for model_name in model_options:
+            try:
+                embedding_client.local_model = SentenceTransformer(model_name)
+                logger.info(f"Local embedding model initialized: {model_name} ({EMBEDDING_DIM} dimensions)")
+                break
+            except Exception as e:
+                logger.error(f"Failed to initialize {model_name}: {e}")
+                continue
+        else:
+            logger.error("All local embedding models failed to initialize")
             return None
 
     try:
